@@ -1,0 +1,127 @@
+
+body {
+	margin: 60px;
+	font-family: sans-serif;
+}
+
+h1 {
+	font-size: 28px;
+	margin-top: 0;
+	margin-bottom: 12px;
+}
+
+ol#instructions {
+	margin: 12px 0;
+	font-size: 18px;
+}
+
+p {
+	margin: 12px 0;
+	font-size: 16px;
+}
+
+div#statistics {
+	font-size: 20px;
+}
+
+div#statistics,
+div#authorInfo {
+	font-family: monospace;
+	margin-left: 440px;
+}
+
+div#authorInfo {
+	font-size: 16px;
+	color: #004f00;
+	margin-bottom: 18px;
+}
+
+div#authorInfo a,
+div#authorInfo a:visited {
+	color: #00004f;
+}
+
+div#statistics > div {
+	display: none;
+}
+
+div#statistics > div.show {
+	display: block;
+}
+
+div#statistics table td + td {
+	text-align: right;
+}
+
+ol#instructions li {
+	margin-bottom: 12px;
+}
+
+table.sudoku {
+	float: left;
+	margin-right: 60px;
+	border: 3px solid black;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+table.sudoku td {
+	padding: 0;
+	border: 1px solid black;
+}
+
+table.sudoku input {
+	padding: 0;
+	border: 0;
+	width: 26px;
+	height: 26px;
+	background-color: transparent;
+	font-family: sans-serif;
+	font-size: 22px;
+	text-align: center;
+}
+
+table.sudoku input.calculated {
+	color: #007;
+}
+
+table.sudoku table.region {
+	border: 2px solid black;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+table.sudoku table.region td {
+	width: 40px;
+	height: 40px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+table.sudoku .oddrow  .oddcol  table.region .oddrow  .oddcol,
+table.sudoku .oddrow  .oddcol  table.region .evenrow .evencol,
+table.sudoku .evenrow .evencol table.region .oddrow  .oddcol,
+table.sudoku .evenrow .evencol table.region .evenrow .evencol {
+	background-color: #bbb;
+}
+
+table.sudoku .oddrow  .oddcol  table.region .oddrow  .evencol,
+table.sudoku .oddrow  .oddcol  table.region .evenrow .oddcol,
+table.sudoku .evenrow .evencol table.region .oddrow  .evencol,
+table.sudoku .evenrow .evencol table.region .evenrow .oddcol {
+	background-color: #ccc;
+}
+
+table.sudoku .oddrow  .evencol table.region .oddrow  .oddcol,
+table.sudoku .oddrow  .evencol table.region .evenrow .evencol,
+table.sudoku .evenrow .oddcol  table.region .oddrow  .oddcol,
+table.sudoku .evenrow .oddcol  table.region .evenrow .evencol {
+	background-color: #ddd;
+}
+
+table.sudoku .oddrow  .evencol table.region .oddrow  .evencol,
+table.sudoku .oddrow  .evencol table.region .evenrow .oddcol,
+table.sudoku .evenrow .oddcol  table.region .oddrow  .evencol,
+table.sudoku .evenrow .oddcol  table.region .evenrow .oddcol {
+	background-color: #eee;
+}

@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<!--
+// Author: Johan Beronius, johanb@athega.se, http://www.athega.se/, 2009
+// License: Use however you want, just credit the author :-)
+-->
+<head>
+	<title>Sudoku solver</title>
+	<link rel="stylesheet" type="text/css" href="sudokusolver.css" />
+	<script type="text/javascript" src="mootools.js"></script>
+	<script type="text/javascript" src="sudokusolver-logic.js"></script>
+	<script type="text/javascript" src="sudokusolver-behaviour.js"></script>
+</head>
+<body>
+
+
+<form>
+<table class="sudoku">
+ <tr class="oddrow">
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="evencol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+ </tr>
+ <tr class="evenrow">
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="evencol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+ </tr>
+ <tr class="oddrow">
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="evencol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+  <td class="oddcol">
+
+	<table class="region">
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="evenrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	 <tr class="oddrow">
+	  <td class="oddcol" ><input type="text"/></td>
+	  <td class="evencol"><input type="text"/></td>
+	  <td class="oddcol" ><input type="text"/></td>
+	 </tr>
+	</table>
+
+  </td>
+ </tr>
+</table>
+
+<h1>Sudoku solver</h1>
+
+<p>
+This Sudoku solver will calculate all possible solutions to any given combination of numbers.
+</p>
+
+<ol id="instructions">
+ <li>Enter all known numbers into the grid. Use the mouse, tab or arrow keys to move the cursor. Cursor will automatically move to next box when a number is entered. Backspace or delete will erase a number.</li>
+ <li>Click <input id="startButton" type="button" value="solve"/> to calculate all missing numbers. Then check out the statistics. </li>
+ <li>Copy <a id="theLink" href="#">the link</a> to share this unique Sudoku combination.</li>
+ <li>Click <input id="resetButton" type="reset" value="reset"/> to stop, clear the grid and start over.</li>
+</ol>
+
+<div id="authorInfo">
+Johan Beronius, <a href="mailto:johanb@athega.se">johanb@athega.se</a>, <a href="http://www.athega.se/">http://www.athega.se/</a>, 2009
+</div>
+
+<div id="statistics">
+ <div id="statInvalid">Numbers are not valid. At least 18 numbers must be set with no duplicates in a line, row or region.</div>
+ <div id="statFixed"><span id="statsFixedNumbers"></span>&nbsp;fixed numbers set.</div>
+ <div id="statSolved">
+  <table>
+  <tr><td>Solutions found:</td><td id="statsSolutions"></td></tr>
+  <tr><td>Unsolvable combinations encountered:</td><td id="statsUnsolvable"></td></tr>
+  <tr><td>Iterations run:</td><td id="statsIterations"></td></tr>
+  <tr><td>Solved by excluding numbers:</td><td id="statsSolvedByNumberExclusion"></td></tr>
+  <tr><td>Solved by excluding positions:</td><td id="statsSolvedByPositionExclusion"></td></tr>
+  <tr><td>Solved by guessing and branching:</td><td id="statsSolvedByBranching"></td></tr>
+  <tr><td>Processing time:</td><td id="statsProcessingTime"></td></tr>
+  </table>
+ </div>
+ <div id="statNoSolution">This combination of numbers is not a valid solvable Sudoku.</div>
+ <div id="statDone">Done!</div>
+</div>
+
+</form>
+
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-5633854-3");
+pageTracker._initData();
+pageTracker._trackPageview();
+</script>
+
+</body>
+</html>
+
