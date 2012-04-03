@@ -119,7 +119,17 @@ window.addEvent('load', function() {
 			$('statsSolvedByBranching').set('text', sudokuData.stats.solvedByBranching);
 			var time = (sudokuData.stats.processingTime/1000).round(1);
 			$('statsProcessingTime').set('text', time + (time % 1 ? '' : '.0') + 's');
+			var time = ((new Date().getTime() - sudokuData.stats.startTime)/1000).round(1);
+			$('statsTotalTime').set('text', time + (time % 1 ? '' : '.0') + 's');
 			$('statSolved').addClass('show');
+
+
+			$('statsQueueLength').set('text', sudokuData.queue.length);
+			$('statsMaxQueueLength').set('text', sudokuData.stats.maxQueueLength);
+			$('statsWorker1').set('text', sudokuData.stats.worker1);
+			$('statsWorker2').set('text', sudokuData.stats.worker2);
+			$('statsWorker3').set('text', sudokuData.stats.worker3);
+			$('statsWorker4').set('text', sudokuData.stats.worker4);
 		};
 
 		sudokuData.solve();

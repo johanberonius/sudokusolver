@@ -3,6 +3,27 @@
 // License: Use however you want, just credit the author :-)
 ////
 
+
+// This javascript source will be run both in window and worker context
+// If we're in a worker we need to masquerade the global context and load mootools
+if (self.importScripts) {
+	document = {
+		prototype: function() {},
+		createElement: function() {},
+		getElementsByTagName: function() {return []}
+	};
+	window = {
+		document: document,
+		Document: document,
+		Element: { prototype: function() {} },
+		Window:  { prototype: function() {} },
+		addEventListener: function() {},
+		attachEvent: function() {}
+	};
+	self.importScripts('mootools.js');
+}
+
+
 Array.implement({
 	hasTrueDuplicates: function() {
 		var l = this.length;
@@ -25,6 +46,12 @@ Array.implement({
 });
 
 
+
+// Contructor that returns a new new instance of this class
+// extended with all properties of the given data structure
+Class.prototype.bless = function(data) {
+	return $extend(new this(), data);
+};
 
 
 var SudokuGrid = new Class({
@@ -133,12 +160,27 @@ var SudokuGrid = new Class({
 });
 
 
+
 var SudokuData = new Class({
 	initialize: function() {
 		this.grid = new SudokuGrid();
 		this.solution;
 		this.queue = [];
-		this.stats = {};
+		this.stats = {
+			solutionsFound: 0,
+			branches: 0,
+			iterations: 0,
+			unsolvable: 0,
+			solvedByNumberExclusion: 0,
+			solvedByPositionExclusion: 0,
+			solvedByBranching: 0,
+			maxQueueLength: 0,
+			processingTime: 0,
+			worker1: 0,
+			worker2: 0,
+			worker3: 0,
+			worker4: 0
+		};
 	},
 
 	load: function(inputs) {
@@ -315,14 +357,19 @@ var SudokuData = new Class({
 		this.stats.solvedByBranching = 0;
 		this.stats.maxQueueLength = 0;
 		this.stats.processingTime = 0;
+		this.stats.startTime = new Date().getTime();
 
 		this.grid.calcOptions();
 		this.queue.push(this.grid);
-		this.workQueue();
+
+		if (window.Worker)
+			this.workerQueue();
+		else
+			this.timerQueue();
     },
 
 
-	workQueue: function() {
+	timerQueue: function() {
 		var startTime = new Date().getTime();
 		var runTime;
 
@@ -331,9 +378,9 @@ var SudokuData = new Class({
 			if (this.stats.maxQueueLength < this.queue.length)
 				this.stats.maxQueueLength = this.queue.length;
 
-			this.grid = this.queue.pop();
-			if (this.solveBranch()) {
-				this.solution = this.grid;
+			var grid = this.queue.pop();
+			if (this.solveBranch(grid)) {
+				this.solution = grid;
 				this.stats.solutionsFound++;
 			}
 
@@ -344,7 +391,7 @@ var SudokuData = new Class({
 
 				this.stats.processingTime += runTime;
 				this.updateCallback();
-				return this.workQueueTimeoutId = this.workQueue.delay(20, this);
+				return this.timerQueueId = this.timerQueue.delay(20, this);
 			}
 		}
 
@@ -355,11 +402,55 @@ var SudokuData = new Class({
 
 	stop: function() {
 		this.queue.empty();
-		$clear(this.workQueueTimeoutId);
+		$clear(this.timerQueueId);
+		$clear(this.timerUpdateId);
     },
 
 
-	solveBranch: function() {
+	workerQueue: function() {
+
+		var thisSudokuData = this;
+
+		worker1.onmessage = worker2.onmessage = worker3.onmessage = worker4.onmessage = function(event) {
+			this.busy = false;
+			var data = JSON.decode(event.data);
+
+			for (var i in data.stats)
+				thisSudokuData.stats[i] += data.stats[i];
+
+			for (var i=0; i<data.queue.length; i++) {
+				var grid = SudokuGrid.bless(data.queue[i]);
+				thisSudokuData.queue.push(grid);
+			}
+
+			if (thisSudokuData.stats.maxQueueLength < thisSudokuData.queue.length)
+				thisSudokuData.stats.maxQueueLength = thisSudokuData.queue.length;
+
+
+			if (thisSudokuData.queue.length == 0 && !worker1.busy && !worker2.busy && !worker3.busy && !worker4.busy) {
+				$clear(thisSudokuData.timerUpdateId);
+				thisSudokuData.updateCallback();
+				thisSudokuData.doneCallback();
+				return;
+			}
+
+			while (thisSudokuData.queue.length > 0 && (!worker1.busy || !worker2.busy || !worker3.busy || !worker4.busy)) {
+				var grid = thisSudokuData.queue.pop();
+				if      (!worker1.busy) { thisSudokuData.stats.worker1++; worker1.solveBranch(grid); }
+				else if (!worker2.busy) { thisSudokuData.stats.worker2++; worker2.solveBranch(grid); }
+				else if (!worker3.busy) { thisSudokuData.stats.worker3++; worker3.solveBranch(grid); }
+				else if (!worker4.busy) { thisSudokuData.stats.worker4++; worker4.solveBranch(grid); }
+			}
+
+		};
+
+		var grid = this.queue.pop();
+		worker1.solveBranch(grid);
+		this.timerUpdateId = this.updateCallback.periodical(200, this);
+    },
+
+
+	solveBranch: function(grid) {
 
 		this.stats.branches++;
 
@@ -373,15 +464,15 @@ var SudokuData = new Class({
 			// Search for possible positions for each missing number in every row
 			for (var ry=0; ry<3; ry++) {
 				for (var y=0; y<3; y++) {
-					var row = this.grid.getRowArray(ry, y);
+					var row = grid.getRowArray(ry, y);
 					var missingNumbers = [1,2,3,4,5,6,7,8,9].eraseAll(row);
 					rowNumbers: for (var i=0; i<missingNumbers.length; i++) {
 						var n = missingNumbers[i];
 						var possiblePosition = undefined;
 						for (var rx=0; rx<3; rx++) {
 							for (var x=0; x<3; x++) {
-								if (this.grid[ry][rx][y][x]) continue;
-								var options = this.grid.options[ry][rx][y][x];
+								if (grid[ry][rx][y][x]) continue;
+								var options = grid.options[ry][rx][y][x];
 								if (options.contains(n)) { // The number can exist at this position
 									if (possiblePosition) continue rowNumbers; // More than one possible position found
 									possiblePosition = {rx: rx, x: x};
@@ -394,8 +485,8 @@ var SudokuData = new Class({
 						}
 						solvedThisIteration++;
 						this.stats.solvedByPositionExclusion++;
-						this.grid.setNumber(possiblePosition.rx, ry, possiblePosition.x, y, n);
-						if (this.grid.count == 81) return true; // We have a solution
+						grid.setNumber(possiblePosition.rx, ry, possiblePosition.x, y, n);
+						if (grid.count == 81) return true; // We have a solution
 					}
 				}
 			}
@@ -403,15 +494,15 @@ var SudokuData = new Class({
 			// Search for possible positions for each missing number in every column
 			for (var rx=0; rx<3; rx++) {
 				for (var x=0; x<3; x++) {
-					var column = this.grid.getColumnArray(rx, x);
+					var column = grid.getColumnArray(rx, x);
 					var missingNumbers = [1,2,3,4,5,6,7,8,9].eraseAll(column);
 					columnNumbers: for (var i=0; i<missingNumbers.length; i++) {
 						var n = missingNumbers[i];
 						var possiblePosition = undefined;
 						for (var ry=0; ry<3; ry++) {
 							for (var y=0; y<3; y++) {
-								if (this.grid[ry][rx][y][x]) continue;
-								var options = this.grid.options[ry][rx][y][x];
+								if (grid[ry][rx][y][x]) continue;
+								var options = grid.options[ry][rx][y][x];
 								if (options.contains(n)) { // The number can exist at this position
 									if (possiblePosition) continue columnNumbers; // More than one possible position found
 									possiblePosition = {ry: ry, y: y};
@@ -424,8 +515,8 @@ var SudokuData = new Class({
 						}
 						solvedThisIteration++;
 						this.stats.solvedByPositionExclusion++;
-						this.grid.setNumber(rx, possiblePosition.ry, x, possiblePosition.y, n);
-						if (this.grid.count == 81) return true; // We have a solution
+						grid.setNumber(rx, possiblePosition.ry, x, possiblePosition.y, n);
+						if (grid.count == 81) return true; // We have a solution
 					}
 				}
 			}
@@ -433,15 +524,15 @@ var SudokuData = new Class({
 			// Search for possible positions for each missing number in every region
 			for (var ry=0; ry<3; ry++) {
 				for (var rx=0; rx<3; rx++) {
-					var region = this.grid.getRegionArray(rx, ry);
+					var region = grid.getRegionArray(rx, ry);
 					var missingNumbers = [1,2,3,4,5,6,7,8,9].eraseAll(region);
 					regionNumbers: for (var i=0; i<missingNumbers.length; i++) {
 						var n = missingNumbers[i];
 						var possiblePosition = undefined;
 						for (var y=0; y<3; y++) {
 							for (var x=0; x<3; x++) {
-								if (this.grid[ry][rx][y][x]) continue;
-								var options = this.grid.options[ry][rx][y][x];
+								if (grid[ry][rx][y][x]) continue;
+								var options = grid.options[ry][rx][y][x];
 								if (options.contains(n)) { // The number can exist at this position
 									if (possiblePosition) continue regionNumbers; // More than one possible position found
 									possiblePosition = {x: x, y: y};
@@ -454,8 +545,8 @@ var SudokuData = new Class({
 						}
 						solvedThisIteration++;
 						this.stats.solvedByPositionExclusion++;
-						this.grid.setNumber(rx, ry, possiblePosition.x, possiblePosition.y, n);
-						if (this.grid.count == 81) return true; // We have a solution
+						grid.setNumber(rx, ry, possiblePosition.x, possiblePosition.y, n);
+						if (grid.count == 81) return true; // We have a solution
 					}
 				}
 			}
@@ -469,9 +560,9 @@ var SudokuData = new Class({
 				for (var rx=0; rx<3; rx++) {
 					for (var y=0; y<3; y++) {
 						for (var x=0; x<3; x++) {
-							if (this.grid[ry][rx][y][x]) continue;
+							if (grid[ry][rx][y][x]) continue;
 
-							var options = this.grid.options[ry][rx][y][x];
+							var options = grid.options[ry][rx][y][x];
 							if (options.length == 0) { // Found a dead end with no options left.
 								this.stats.unsolvable++;
 								return false;
@@ -479,8 +570,8 @@ var SudokuData = new Class({
 							if (options.length != 1) continue; // More than one option left, skip for now.
 							solvedThisIteration++;
 							this.stats.solvedByNumberExclusion++;
-							this.grid.setNumber(rx, ry, x, y, options[0]);
-							if (this.grid.count == 81) return true; // We have a solution
+							grid.setNumber(rx, ry, x, y, options[0]);
+							if (grid.count == 81) return true; // We have a solution
 						}
 					}
 				}
@@ -490,7 +581,7 @@ var SudokuData = new Class({
 		} while (solvedThisIteration > 0);
 
 		// We have a solution
-		if (this.grid.count == 81) return true;
+		if (grid.count == 81) return true;
 
 		// No solution yet but we're stuck.
 		// Find options for first empty slot, clone alternative branchs and push on queue.
@@ -499,8 +590,8 @@ var SudokuData = new Class({
 				for (var rx=0; rx<3; rx++) {
 					for (var y=0; y<3; y++) {
 						for (var x=0; x<3; x++) {
-							if (this.grid[ry][rx][y][x]) continue;
-							var options = this.grid.options[ry][rx][y][x];
+							if (grid[ry][rx][y][x]) continue;
+							var options = grid.options[ry][rx][y][x];
 							if (options.length == 0) return false; // Should not happen, dead ends should be trapped by earlier iteration.
 							if (options.length == 1) return false; // Should not happen, unambiguous options should be set by earlier iteration.
 							if (options.length != v) continue; // Continue if this is not the box with the least number of options.
@@ -508,7 +599,7 @@ var SudokuData = new Class({
 							this.stats.solvedByBranching += options.length;
 
 							options.each(function(option) {
-								var branch = $unlink(this.grid);
+								var branch = $unlink(grid);
 								branch.setNumber(rx, ry, x, y, option);
 								this.queue.push(branch);
 							}, this);
@@ -524,3 +615,36 @@ var SudokuData = new Class({
 
 
 });
+
+
+
+// If we're in the window and workers are available
+if (window.Worker) {
+
+	worker1 = new Worker('sudokusolver-logic.js');
+	worker2 = new Worker('sudokusolver-logic.js');
+	worker3 = new Worker('sudokusolver-logic.js');
+	worker4 = new Worker('sudokusolver-logic.js');
+	worker1.busy = worker2.busy = worker3.busy = worker4.busy = false;
+	worker1.solveBranch = worker2.solveBranch = worker3.solveBranch = worker4.solveBranch = function(grid) {
+		this.busy = true;
+		this.postMessage(JSON.encode(grid));
+	};
+
+// If we're in a worker
+} else if (self.importScripts) {
+
+	self.onmessage = function(event) {
+		var grid = SudokuGrid.bless(JSON.decode(event.data));
+		var sudokuData = new SudokuData();
+
+		if (sudokuData.solveBranch(grid)) {
+			sudokuData.solution = grid;
+			sudokuData.stats.solutionsFound++;
+		}
+
+		self.postMessage(JSON.encode({stats: sudokuData.stats, queue: sudokuData.queue}));
+	};
+
+}
+
